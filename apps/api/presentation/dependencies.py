@@ -26,6 +26,14 @@ Usage in a router:
 
 from __future__ import annotations
 
+import os
+import json
+import base64
+import httpx
+from dotenv import load_dotenv
+load_dotenv()
+from jose import JWTError, jwt
+
 from uuid import UUID
 
 from fastapi import Depends, Header, HTTPException
@@ -51,21 +59,37 @@ from infrastructure.repositories.pattern_repository import PostgresPatternReposi
 # User identity
 # ---------------------------------------------------------------------------
 
-def get_current_user_id(x_user_id: str = Header(...)) -> UUID:
-    """
-    Extract the authenticated user's ID from the X-User-Id header.
-
-    Raises 401 if the header is missing or not a valid UUID.
-
-    This is a placeholder. When Clerk auth is wired, replace this
-    with JWT verification and extract the user ID from the token claims.
-    """
+async def get_current_user_id(authorization: str = Header(...)) -> str:
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing Bearer token.")
+    
+    token = authorization.removeprefix("Bearer ")
+    # Temporary debug — remove after fixing
     try:
-        return UUID(x_user_id)
-    except (ValueError, AttributeError):
-        raise HTTPException(status_code=401, detail="Invalid or missing X-User-Id header.")
-
-
+        payload = token.split(".")[1]
+        payload += "=" * (4 - len(payload) % 4)
+        decoded = json.loads(base64.b64decode(payload))
+        print("TOKEN CLAIMS:", decoded)
+    except Exception as e:
+        print("JWT ERROR TYPE:", type(e).__name__)
+        print("JWT ERROR:", str(e))
+        raise HTTPException(status_code=401, detail="Invalid or expired token.")
+    
+    try:
+        jwks_url = f"https://{os.environ['CLERK_DOMAIN']}/.well-known/jwks.json"
+        async with httpx.AsyncClient() as client:
+            jwks = (await client.get(jwks_url)).json()
+        
+        claims = jwt.decode(
+            token,
+            jwks,
+            algorithms=["RS256"],
+            options={"verify_aud": False}
+        )
+        return claims["sub"]
+    except (JWTError, KeyError, httpx.HTTPError) as e:
+        print("JWT ERROR:", e)
+        raise HTTPException(status_code=401, detail="Invalid or expired token.")
 # ---------------------------------------------------------------------------
 # Repository factory helpers
 # ---------------------------------------------------------------------------

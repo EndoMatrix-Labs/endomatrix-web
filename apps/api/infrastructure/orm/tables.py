@@ -53,8 +53,8 @@ metadata = MetaData()
 daily_logs = Table(
     "daily_logs",
     metadata,
-    Column("id", UUID(as_uuid=True), primary_key=True),
-    Column("user_id", UUID(as_uuid=True), nullable=False, index=True),
+    Column("id", String(255), primary_key=True),
+    Column("user_id", String(255), nullable=False, index=True),
     Column("logged_date", String(10), nullable=False),      # ISO date: "YYYY-MM-DD"
     Column("pain_level", SmallInteger, nullable=False),
     Column("energy_level", SmallInteger, nullable=False),
@@ -88,7 +88,7 @@ Index(
 cycle_baselines = Table(
     "cycle_baselines",
     metadata,
-    Column("user_id", UUID(as_uuid=True), primary_key=True),
+    Column("user_id", String(255), primary_key=True),
     Column("last_period_start", String(10), nullable=False),    # ISO date
     Column("average_cycle_length", SmallInteger, nullable=True),# None = irregular
     Column("is_irregular", Boolean, nullable=False),
@@ -103,8 +103,8 @@ cycle_baselines = Table(
 pattern_results = Table(
     "pattern_results",
     metadata,
-    Column("id", UUID(as_uuid=True), primary_key=True),
-    Column("user_id", UUID(as_uuid=True), nullable=False, index=True),
+    Column("id", String(255), primary_key=True),
+    Column("user_id", String(255), nullable=False, index=True),
     Column("generated_at", DateTime, nullable=False),
     Column("cycles_analyzed", SmallInteger, nullable=False),
     Column("total_logs", Integer, nullable=False),
@@ -126,8 +126,8 @@ pattern_results = Table(
 early_feedback = Table(
     "early_feedback",
     metadata,
-    Column("id", UUID(as_uuid=True), primary_key=True),
-    Column("user_id", UUID(as_uuid=True), nullable=False, index=True),
+    Column("id", String(255), primary_key=True),
+    Column("user_id", String(255), nullable=False, index=True),
     Column("message", Text, nullable=False),
     Column("generated_at", DateTime, nullable=False),
     Column("log_count", SmallInteger, nullable=False),
@@ -144,9 +144,9 @@ early_feedback = Table(
 audit_events = Table(
     "audit_events",
     metadata,
-    Column("id", UUID(as_uuid=True), primary_key=True),
+    Column("id", String(255), primary_key=True),
     Column("event_type", String(64), nullable=False, index=True),
-    Column("user_id", UUID(as_uuid=True), nullable=True, index=True),
+    Column("user_id", String(255), nullable=True, index=True),
     # user_id is nullable because some system events are not user-scoped
     Column("occurred_at", DateTime, nullable=False),
     Column("payload", JSONB, nullable=False),
